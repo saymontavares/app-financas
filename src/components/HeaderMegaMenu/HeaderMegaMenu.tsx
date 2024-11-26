@@ -32,6 +32,7 @@ import {
 import classes from "./HeaderMegaMenu.module.css";
 import { useMantineColorScheme } from "@mantine/core";
 import { NewDebtModal } from "../NewDebtModal/NewDebtModal";
+import { Link } from "react-router-dom";
 
 const mockdata = [
   {
@@ -104,9 +105,9 @@ export const HeaderMegaMenu = () => {
             <MantineLogo size={30} />
 
             <Group h="100%" gap={0} visibleFrom="sm">
-              <a href="#" className={classes.link}>
+              <Link to="/" className={classes.link}>
                 Home
-              </a>
+              </Link>
             </Group>
 
             <Group visibleFrom="sm">

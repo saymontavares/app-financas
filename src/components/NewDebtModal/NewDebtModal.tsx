@@ -7,6 +7,7 @@ import { NewDebtModalProps } from "./types/NewDebtModal";
 import { FormSimpleInterest } from "./FormSimpleInterest";
 import { TypesOfInterest } from "./enums/TypesOfInterest";
 import { useState } from "react";
+import { FormCompoundInterest } from "./FormCompoundInterest";
 
 export const NewDebtModal = ({ opened, close }: NewDebtModalProps) => {
   const [segmented, setSegmented] = useState<string>(TypesOfInterest.SIMPLE);
@@ -44,9 +45,11 @@ export const NewDebtModal = ({ opened, close }: NewDebtModalProps) => {
           },
         ]}
       />
-
       {segmented == TypesOfInterest.SIMPLE && (
         <FormSimpleInterest type={segmented} close={close} />
+      )}
+      {segmented == TypesOfInterest.COMPOSITE && (
+        <FormCompoundInterest type={segmented} close={close} />
       )}
     </Modal>
   );

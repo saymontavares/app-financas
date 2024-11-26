@@ -17,6 +17,7 @@ export type ListAccountsPayable = {
   totalInterest: number;
   percentageInstallmentsPaid: number;
   type: PayableType;
+  installments: Installment[];
 };
 
 export enum PayableType {
@@ -50,6 +51,7 @@ export type AccountsPayable = {
   capital: number; // Corrigido para number
   rate: number;
   time: number;
+  totalToPay: number;
   type: PayableType; // Usando o enum PayableType
   totalInterest: number; // Corrigido para number
   status: PayableStatus; // Usando o enum PayableStatus

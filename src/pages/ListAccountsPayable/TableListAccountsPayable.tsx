@@ -6,6 +6,7 @@ import {
 import { Box, Grid, Stack, TextInput } from "@mantine/core";
 import { CardListAccountsPayableItem } from "./TableListAccountsPayableItem";
 import { TableListAccountsPayableSkeleton } from "./TableListAccountsPayableSkeleton";
+import { CardsHomeStates } from "../ListInstallmentsAccountPayable/components/CardsHomeStates";
 
 export const TableListAccountsPayable = () => {
   const { accountsPayable, loading } = useAccountsPayable();
@@ -38,6 +39,7 @@ export const TableListAccountsPayable = () => {
 
   return (
     <>
+      <CardsHomeStates accountsPayable={accountsPayable} />
       <Box>
         <TextInput
           placeholder="Buscar..."
