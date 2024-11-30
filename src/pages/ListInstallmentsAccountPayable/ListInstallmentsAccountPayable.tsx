@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../http-client";
 import { AxiosError } from "axios";
-import { AccountsPayable } from "../../contexts/AccountsPayableContext";
+import {
+  AccountsPayable,
+  PayableStatus,
+  PayableType,
+  useAccountsPayable,
+} from "../../contexts/AccountsPayableContext";
 import {
   Badge,
   Checkbox,
@@ -18,6 +23,7 @@ import {
   Progress,
   Divider,
   ThemeIcon,
+  Grid,
 } from "@mantine/core";
 import cx from "clsx";
 import classes from "./ListInstallmentsAccountPayable.module.css";
@@ -32,6 +38,7 @@ import {
   IconReceipt2,
 } from "@tabler/icons-react";
 import classesCards from "./../ListInstallmentsAccountPayable/components/CardsHomeStates.module.css";
+import { notifications } from "@mantine/notifications";
 
 export const ListInstallmentsAccountPayable = () => {
   const { id } = useParams();
@@ -42,8 +49,9 @@ export const ListInstallmentsAccountPayable = () => {
   >({});
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [newSelection, setNewSelection] = useState<string[]>([]);
+  const { fetchAccountsPayable } = useAccountsPayable();
 
-  const fetchAccountsPayableInstallments = async () => {
+  const fetchAccountsPayableInstallments = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get(`accounts-payable/${id}`);
@@ -62,21 +70,35 @@ export const ListInstallmentsAccountPayable = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchAccountsPayableInstallments();
-  }, [id]);
+  }, [fetchAccountsPayableInstallments]);
 
   const confirmSelection = async () => {
-    setShowConfirmation(false);
-    setSelection(newSelection);
-
     try {
-      await api.post("/update-installments", { installments: newSelection });
+      setLoading(true);
+      setShowConfirmation(false);
+      setSelection(newSelection);
+
+      await api.patch(`/accounts-payable-installment/${id}`, {
+        installments: newSelection,
+      });
+      await fetchAccountsPayableInstallments();
+      await fetchAccountsPayable();
+
+      notifications.show({
+        title: "Tudo certo!",
+        message: "Parcela atualizada com sucesso.",
+        color: "green",
+        icon: <IconCheck />,
+      });
     } catch (e) {
       const error = e as AxiosError;
-      console.error("Erro ao atualizar as parcelas:", error.message);
+      throw new Error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -201,7 +223,8 @@ export const ListInstallmentsAccountPayable = () => {
             </Group>
             <Group align="flex-end" gap="xs" mt={25}>
               <Text className={classesCards.value}>
-                {listInstallments.type}
+                {listInstallments.type == PayableType.SIMPLE && "SIMPLES"}
+                {listInstallments.type == PayableType.COMPOSITE && "COMPOSTO"}
               </Text>
             </Group>
           </Paper>
@@ -234,7 +257,10 @@ export const ListInstallmentsAccountPayable = () => {
             </Group>
             <Group align="flex-end" gap="xs" mt={25}>
               <Text className={classesCards.value}>
-                {listInstallments.status}
+                {listInstallments.status == PayableStatus.PENDING && "PENDENTE"}
+                {listInstallments.status == PayableStatus.PAID && "PAGO"}
+                {listInstallments.status == PayableStatus.CANCELLED &&
+                  "CANCELADO"}
               </Text>
             </Group>
           </Paper>
@@ -269,10 +295,21 @@ export const ListInstallmentsAccountPayable = () => {
               <Text className={classesCards.value}>{`${
                 listInstallments.installments?.filter(
                   (installment) => installment.itPaid
-                ).length
-              }/${listInstallments.installments?.length}`}</Text>
+                ).length ?? 0
+              }/${listInstallments.installments?.length ?? 0}`}</Text>
             </Group>
-            <Progress value={(1 / 30) * 100} size="lg" mt="md" />{" "}
+            {/* Calculando o progresso com base nas parcelas pagas */}
+            <Progress
+              value={
+                ((listInstallments.installments?.filter(
+                  (installment) => installment.itPaid
+                ).length ?? 0) /
+                  (listInstallments.installments?.length ?? 1)) *
+                100
+              }
+              size="lg"
+              mt="md"
+            />
           </Paper>
         </SimpleGrid>
       )}
@@ -311,14 +348,24 @@ export const ListInstallmentsAccountPayable = () => {
       <Modal
         opened={showConfirmation}
         onClose={() => setShowConfirmation(false)}
-        title="Confirmar ação"
+        title="Alterar Parcela(s)"
       >
-        <Text>Deseja realmente atualizar as parcelas selecionadas?</Text>
-        <Group mt="md">
-          <Button onClick={() => setShowConfirmation(false)}>Cancelar</Button>
-          <Button color="blue" onClick={confirmSelection}>
-            Confirmar
-          </Button>
+        <Group>
+          <Grid columns={12} gutter="md">
+            <Grid.Col span={12}>
+              <Text>Deseja realmente atualizar as parcelas selecionadas?</Text>
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <Button fullWidth onClick={() => setShowConfirmation(false)}>
+                Cancelar
+              </Button>
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <Button fullWidth color="teal" onClick={confirmSelection}>
+                Confirmar
+              </Button>
+            </Grid.Col>
+          </Grid>
         </Group>
       </Modal>
     </>
